@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>パンタグラフ・シミュレーター</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <h1>パンタグラフ・シミュレーター</h1>
+    <p>自分だけのパンタグラフを設計しよう</p>
+  </header>
+
+  <!-- モード切り替え -->
+  <nav class="mode-nav">
+
+    <button id="assemblyModeBtn" class="mode-btn active">
+      ① パンタグラフの組み立て
+    </button>
+
+    <button id="drawingModeBtn" class="mode-btn">
+      ② 図形を描いて実験
+    </button>
+
+  </nav>
+
+
+  <!-- メイン画面 -->
+  <main class="app-main">
+
+    <!-- 操作パネル -->
+    <aside class="control-panel">
+
+      <h2>操作パネル</h2>
+
+      <div id="assemblyControls">
+
+        <!-- 棒の追加 -->
+        <h3>棒の追加</h3>
+
+        <label for="rodLength">棒の長さ</label>
+
+        <input
+          type="number"
+          id="rodLength"
+          value="300"
+          min="50"
+          max="1000"
+        >
+
+        <label for="divisionCount">内分点の個数</label>
+
+        <input
+          type="number"
+          id="divisionCount"
+          value="3"
+          min="1"
+          max="20"
+        >
+
+        <button id="addRodBtn">
+          ＋ 棒を追加
+        </button>
+<div class="control-section">
+  <h3>棒の削除</h3>
+  <p>
+    削除したい棒をクリックして選択してください。
+    連結されている棒は削除できません。
+  </p>
+  <button id="deleteRodBtn" class="secondary-btn">
+    選択した棒を削除
+  </button>
+  <p id="deleteRodStatus">
+    削除する棒をクリックしてください。
+  </p>
+</div>
+
+        <hr>
+
+
+        <!-- 棒の連結 -->
+        <h3>棒の連結</h3>
+
+        <button
+          id="connectionModeBtn"
+          class="secondary-btn"
+        >
+          連結モード：OFF
+        </button>
+        <button id="removeConnectionModeBtn" class="secondary-btn">
+  連結解除モード
+</button>
+
+        <p id="connectionStatus">
+          連結モードをONにすると、穴同士を連結できます。
+        </p>
+<p id="removeConnectionStatus">
+  解除したい連結をクリックしてください。
+</p>
+
+        <hr>
+
+
+        <!-- 点の設定 -->
+        <h3>点の設定</h3>
+
+        <p>
+          設定する点の種類を選び、棒の上をクリックしてください。
+        </p>
+
+       
+<div class="point-setting-buttons">
+
+  <button
+    id="fixedPointModeBtn"
+    class="secondary-btn"
+  >
+    固定点を設定
+  </button>
+
+  <button
+    id="removeFixedPointModeBtn"
+    class="secondary-btn"
+  >
+    固定点解除モード
+  </button>
+
+  <button
+    id="markerPointModeBtn"
+    class="secondary-btn"
+  >
+    なぞる点を設定
+  </button>
+
+  <button
+    id="moveMarkerPointModeBtn"
+    class="secondary-btn"
+  >
+    なぞる点の位置変更
+  </button>
+
+  <button
+    id="penPointModeBtn"
+    class="secondary-btn"
+  >
+    ペンの位置を設定
+  </button>
+
+  <button
+    id="movePenPointModeBtn"
+    class="secondary-btn"
+  >
+    ペンの位置変更
+  </button>
+
+  <button
+    id="penToggleBtn"
+    class="secondary-btn active"
+  >
+    ペン：ON
+  </button>
+
+</div>
+
+        <p id="pointSettingStatus">
+          点の設定モードはOFFです。
+        </p>
+
+        <button
+          id="cancelPointModeBtn"
+          class="secondary-btn"
+        >
+          設定モードを解除
+        </button>
+
+
+        <hr>
+
+
+        <!-- 軌跡の操作 -->
+        <h3>軌跡の操作</h3>
+
+        <button
+          id="clearTraceBtn"
+          class="secondary-btn"
+        >
+          軌跡を消去
+        </button>
+
+      </div>
+
+      <!-- 図形描画モード -->
+      <div id="drawingControls" hidden>
+
+        <h3>自由描画</h3>
+
+        <p>
+          マウスを押したまま動かして、拡大したい図形を描いてください。
+        </p>
+
+        <p id="drawingStatus">
+          描画モードです。
+        </p>
+<button
+  id="undoDrawingBtn"
+  class="secondary-btn"
+>
+  1つ前に戻る
+</button>
+        <button
+          id="clearFigureBtn"
+          class="secondary-btn"
+        >
+          描いた図形を消去
+        </button>
+
+      </div>
+    </aside>
+
+
+    <!-- 作業スペース -->
+    <section class="workspace">
+
+      <div class="workspace-header">
+
+        <h2 id="workspaceTitle">
+          パンタグラフの組み立て
+        </h2>
+
+      </div>
+
+
+          <!-- SVG描画領域 -->
+      <svg
+        id="drawingArea"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 1200 750"
+      >
+
+        <!-- 元の図形（黒い線） -->
+        <g id="figureLayer"></g>
+
+        <!-- 棒 -->
+        <g id="rodLayer"></g>
+
+        <!-- 連結部分 -->
+        <g id="connectionLayer"></g>
+
+        <!-- 点 -->
+        <g id="pointLayer"></g>
+
+        <!-- 軌跡 -->
+        <g id="traceLayer"></g>
+
+      </svg>
+
+    </section>
+
+  </main>
+
+
+  <!-- JavaScript -->
+  <script src="constraints.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>

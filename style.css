@@ -1,0 +1,289 @@
+
+/* =========================================
+   基本設定
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Yu Gothic", "Meiryo", sans-serif;
+  color: #263238;
+  background: #f1f3f5;
+}
+
+/* =========================================
+   ヘッダー
+========================================= */
+
+.app-header {
+  height: 85px;
+  padding: 14px 28px;
+  background: #263746;
+  color: white;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.app-header p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: #cbd5dc;
+}
+
+/* =========================================
+   モード切り替え
+========================================= */
+
+.mode-nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 0;
+  background: white;
+  border-bottom: 1px solid #dce1e5;
+}
+
+.mode-btn {
+  padding: 13px 24px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #687780;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.mode-btn:hover {
+  background: #f4f7f9;
+}
+
+.mode-btn.active {
+  color: #1976a8;
+  border-bottom-color: #1976a8;
+}
+
+/* =========================================
+   メインレイアウト
+========================================= */
+
+.app-main {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  height: calc(100vh - 145px);
+  min-height: 500px;
+}
+
+/* =========================================
+   操作パネル
+========================================= */
+
+.control-panel {
+  width: 250px;
+  min-width: 250px;
+  padding: 18px;
+  background: white;
+  border: 1px solid #dce1e5;
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+.control-panel h2 {
+  margin: 0 0 22px;
+  font-size: 17px;
+}
+
+.control-panel h3 {
+  margin: 0 0 16px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #e2e7eb;
+  font-size: 14px;
+}
+
+.control-panel label {
+  display: block;
+  margin: 16px 0 7px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #53636d;
+}
+
+.control-panel input {
+  width: 100%;
+  height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd3d9;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.control-panel button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 11px;
+  border: none;
+  border-radius: 5px;
+  background: #1976a8;
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.control-panel button:hover {
+  background: #125d86;
+}
+
+/* =========================================
+   作業領域
+========================================= */
+
+.workspace {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  background: white;
+  border: 1px solid #dce1e5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.workspace-header {
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid #e2e7eb;
+}
+
+.workspace-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#drawingArea {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(#edf0f2 1px, transparent 1px),
+    linear-gradient(90deg, #edf0f2 1px, transparent 1px);
+  background-size: 25px 25px;
+  touch-action: none;
+}
+
+/* =========================================
+   棒の描画
+========================================= */
+
+.rod-body {
+  stroke: #a87943;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.rod-hole {
+  fill: white;
+  stroke: #704c2c;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.rod-hole:hover {
+  fill: #d8edff;
+}
+
+/* =========================================
+   連結点・役割点
+========================================= */
+
+.connection-point {
+  fill: #f5a623;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.fixed-point {
+  fill: #e05252;
+}
+
+.tracing-point {
+  fill: #2788db;
+}
+
+.pen-point {
+  fill: #20a36b;
+}
+
+/* =========================================
+   軌跡
+========================================= */
+
+.trace-line {
+  fill: none;
+  stroke: #20a36b;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* =========================================
+   非表示設定
+========================================= */
+
+[hidden] {
+  display: none !important;
+}
+
+/* =========================================
+   画面サイズ対応
+========================================= */
+
+@media (max-width: 800px) {
+  .app-main {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .control-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .workspace {
+    height: 600px;
+  }
+}
+/* =========================================
+   連結操作
+========================================= */
+
+.control-panel .secondary-btn {
+  background: #647786;
+}
+
+.control-panel .secondary-btn:hover {
+  background: #455a69;
+}
+
+.control-panel .secondary-btn.active {
+  background: #d97706;
+}
+
+#connectionStatus {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #687780;
+}
