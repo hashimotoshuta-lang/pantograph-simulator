@@ -1,4 +1,3 @@
-
 "use strict";
 
 /* =========================================
@@ -18,6 +17,7 @@ const drawingControls = document.getElementById("drawingControls");
 const drawingStatus = document.getElementById("drawingStatus");
 const clearFigureBtn = document.getElementById("clearFigureBtn");
 const undoDrawingBtn = document.getElementById("undoDrawingBtn");
+
 // SVG要素
 const drawingArea = document.getElementById("drawingArea");
 const rodLayer = document.getElementById("rodLayer");
@@ -29,21 +29,27 @@ const traceLayer = document.getElementById("traceLayer");
 const rodLengthInput = document.getElementById("rodLength");
 const divisionCountInput = document.getElementById("divisionCount");
 const addRodBtn = document.getElementById("addRodBtn");
+
 // 棒の削除操作
 const deleteRodBtn = document.getElementById("deleteRodBtn");
 const deleteRodStatus = document.getElementById("deleteRodStatus");
+
 // 連結操作
 const connectionModeBtn = document.getElementById("connectionModeBtn");
 const connectionStatus = document.getElementById("connectionStatus");
 const removeConnectionModeBtn = document.getElementById("removeConnectionModeBtn");
 const removeConnectionStatus = document.getElementById("removeConnectionStatus");
+
 // 点の設定操作
 const fixedPointModeBtn = document.getElementById("fixedPointModeBtn");
 const removeFixedPointModeBtn = document.getElementById("removeFixedPointModeBtn");
 const markerPointModeBtn = document.getElementById("markerPointModeBtn");
 const penPointModeBtn = document.getElementById("penPointModeBtn");
+
+// HTML側のIDはそのまま使用し、機能を「解除モード」に変更
 const moveMarkerPointModeBtn = document.getElementById("moveMarkerPointModeBtn");
 const movePenPointModeBtn = document.getElementById("movePenPointModeBtn");
+
 const penToggleBtn = document.getElementById("penToggleBtn");
 const cancelPointModeBtn = document.getElementById("cancelPointModeBtn");
 const pointSettingStatus = document.getElementById("pointSettingStatus");
@@ -73,11 +79,13 @@ let nextPointId = 1;
 // { pointId, positions: [{x,y}, ...] }
 let tracePoints = [];
 let penEnabled = true;
+
 // モード・自由描画の状態
 let currentMode = "assembly";
 let isDrawing = false;
 let currentStroke = null;
 let figureStrokes = [];
+
 
 /* =========================================
    SVG座標
@@ -130,85 +138,12 @@ function getFixedPointsForRod(rodId) {
 function addPointToHole(rodId, holeIndex) {
   if (pointSettingMode === null) return;
 
-  // =====================================
-  // 既存の点の位置変更
-  // =====================================
-
-  if (
-    pointSettingMode === "moveMarker" ||
-    pointSettingMode === "movePen"
-  ) {
-    const targetType =
-      pointSettingMode === "moveMarker"
-        ? "marker"
-        : "pen";
-
-    if (!selectedPointForMove) {
-      pointSettingStatus.textContent =
-        "先に移動したい点をクリックしてください。";
-      return;
-    }
-
-    const point = points.find(
-      p => p.id === selectedPointForMove.id
-    );
-
-    if (!point) {
-      selectedPointForMove = null;
-      pointSettingStatus.textContent =
-        "移動対象の点が見つかりません。";
-      renderRods();
-      return;
-    }
-
-    // 同じ種類の点が既にある場所には移動できない
-    const exists = points.some(p =>
-      p.id !== point.id &&
-      p.type === targetType &&
-      p.rodId === rodId &&
-      p.holeIndex === holeIndex
-    );
-
-    if (exists) {
-      pointSettingStatus.textContent =
-        "その穴には同じ種類の点が既にあります。別の穴を選択してください。";
-      return;
-    }
-
-    // 位置を変更
-    point.rodId = rodId;
-    point.holeIndex = holeIndex;
-
-    // ペンの場合は、新しい軌跡の記録領域を作る
-    // 移動前の軌跡はそのまま残す
-    if (targetType === "pen") {
-      tracePoints.push({
-        pointId: point.id,
-        positions: []
-      });
-    }
-
-    const pointName =
-      targetType === "marker"
-        ? "なぞる点"
-        : "ペン";
-
-    pointSettingMode = null;
-    selectedPointForMove = null;
-
-    updatePointModeButtons();
-
-    pointSettingStatus.textContent =
-      `${pointName}の位置を棒${rodId}の穴${holeIndex + 1}に変更しました。`;
-
-    renderRods();
+  // 解除モードでは穴をクリックしても点を追加しない
+  if (!["fixed", "marker", "pen"].includes(pointSettingMode)) {
     return;
   }
 
-  // =====================================
-  // 通常の点の追加
-  // =====================================
-
+  // 同じ位置に同じ種類の点があるか確認
   const exists = points.some(point =>
     point.rodId === rodId &&
     point.holeIndex === holeIndex &&
@@ -343,7 +278,6 @@ function recordPenTraces() {
 }
 
 
-
 function renderTrace() {
   if (!traceLayer) return;
 
@@ -392,11 +326,9 @@ function togglePen() {
 
   penToggleBtn.classList.toggle("active", penEnabled);
 
-  // 表示も更新
-  if (typeof renderTrace === "function") {
-    renderTrace();
-  }
+  renderTrace();
 }
+
 
 function clearTraces() {
   tracePoints.forEach(trace => {
@@ -471,35 +403,52 @@ function renderPoints() {
       });
     }
 
-    // 移動対象の点を選択するモード
-    const moveTargetType =
-      pointSettingMode === "moveMarker"
+    // なぞる点・ペンの解除モード
+    const removeTargetType =
+      pointSettingMode === "removeMarker"
         ? "marker"
-        : pointSettingMode === "movePen"
+        : pointSettingMode === "removePen"
           ? "pen"
           : null;
 
-    if (moveTargetType === point.type) {
+    if (removeTargetType === point.type) {
       circle.style.cursor = "pointer";
+      circle.setAttribute("stroke", "#ff9800");
+      circle.setAttribute("stroke-width", 3);
 
-      // 選択中の点を強調
-      if (
-        selectedPointForMove &&
-        selectedPointForMove.id === point.id
-      ) {
-        circle.setAttribute("stroke", "#ff9800");
-        circle.setAttribute("stroke-width", 4);
-      }
+      circle.addEventListener("pointerdown", event => {
+        event.stopPropagation();
+        event.preventDefault();
+      });
 
       circle.addEventListener("click", event => {
         event.stopPropagation();
 
-        selectedPointForMove = point;
+        // 選択した点を削除
+        points = points.filter(p => p.id !== point.id);
+
+        // ペンの場合は、そのペンの軌跡も削除
+        if (point.type === "pen") {
+          tracePoints = tracePoints.filter(
+            trace => trace.pointId !== point.id
+          );
+
+          renderTrace();
+        }
+
+        const removedName =
+          point.type === "marker" ? "なぞる点" : "ペン";
+
+        // 解除後はモードを終了
+        pointSettingMode = null;
+        selectedPointForMove = null;
+
+        updatePointModeButtons();
 
         pointSettingStatus.textContent =
-          `棒${point.rodId}の点を選択しました。移動先の穴をクリックしてください。`;
+          `${removedName}を解除しました。`;
 
-        renderPoints();
+        renderRods();
       });
     }
 
@@ -519,10 +468,7 @@ function renderPoints() {
 
     pointLayer.appendChild(circle);
   });
-}
-
-
-/* =========================================
+}/* =========================================
    幾何拘束エンジンとの連携
 ========================================= */
 
@@ -599,10 +545,8 @@ function solveMechanism(
       })
     : solverRods.map(rod => ({ ...rod }));
 
-
   // この連結機構に属する固定点
   const fixedPoints = getFixedPointConstraints(connectedIds);
-
 
   const result = solveRodConstraints(
     solverRods,
@@ -817,6 +761,8 @@ function toggleConnectionMode() {
 
   renderRods();
 }
+
+
 function toggleConnectionRemovalMode() {
   connectionRemovalMode = !connectionRemovalMode;
 
@@ -852,9 +798,11 @@ function toggleConnectionRemovalMode() {
   renderRods();
 }
 
+
 /* =========================================
    点の設定モード
 ========================================= */
+
 function updatePointModeButtons() {
   fixedPointModeBtn.classList.toggle(
     "active",
@@ -873,14 +821,26 @@ function updatePointModeButtons() {
 
   moveMarkerPointModeBtn.classList.toggle(
     "active",
-    pointSettingMode === "moveMarker"
+    pointSettingMode === "removeMarker"
   );
 
   movePenPointModeBtn.classList.toggle(
     "active",
-    pointSettingMode === "movePen"
+    pointSettingMode === "removePen"
   );
+
+  moveMarkerPointModeBtn.textContent =
+    pointSettingMode === "removeMarker"
+      ? "なぞる点解除モード：ON"
+      : "なぞる点解除モード";
+
+  movePenPointModeBtn.textContent =
+    pointSettingMode === "removePen"
+      ? "ペン解除モード：ON"
+      : "ペン解除モード";
 }
+
+
 function updateConnectionUI() {
   connectionModeBtn.classList.toggle(
     "active",
@@ -895,6 +855,8 @@ function updateConnectionUI() {
     ? "1本目の棒の未使用の穴を選択してください。"
     : "連結モードをOFFにしました。";
 }
+
+
 function toggleFixedPointRemovalMode() {
   fixedPointRemovalMode = !fixedPointRemovalMode;
 
@@ -923,6 +885,8 @@ function toggleFixedPointRemovalMode() {
 
   renderRods();
 }
+
+
 function setPointSettingMode(mode) {
   if (connectionMode) {
     connectionMode = false;
@@ -950,8 +914,8 @@ function setPointSettingMode(mode) {
     fixed: "固定点の設定モードです。棒の端点または内分点をクリックしてください。",
     marker: "なぞる点の設定モードです。棒の端点または内分点をクリックしてください。",
     pen: "ペンの位置の設定モードです。棒の端点または内分点をクリックしてください。",
-    moveMarker: "移動したいなぞる点をクリックしてください。",
-    movePen: "移動したいペン先をクリックしてください。"
+    removeMarker: "解除したいなぞる点をクリックしてください。",
+    removePen: "解除したいペンをクリックしてください。"
   };
 
   pointSettingStatus.textContent =
@@ -965,10 +929,7 @@ function setPointSettingMode(mode) {
 
 function cancelPointSettingMode() {
   setPointSettingMode(null);
-}
-
-
-/* =========================================
+}/* =========================================
    穴の選択・連結
 ========================================= */
 
@@ -1062,7 +1023,6 @@ function selectHole(rodId, holeIndex) {
    連結線の描画
 ========================================= */
 
-
 function renderConnections() {
   connectionLayer.innerHTML = "";
 
@@ -1137,6 +1097,10 @@ function renderConnections() {
 }
 
 
+/* =========================================
+   棒の削除
+========================================= */
+
 function deleteSelectedRod() {
   if (selectedRodId === null) {
     deleteRodStatus.textContent =
@@ -1183,6 +1147,8 @@ function deleteSelectedRod() {
   deleteRodStatus.textContent =
     `棒${rodId}を削除しました。`;
 }
+
+
 /* =========================================
    棒の描画
 ========================================= */
@@ -1218,39 +1184,38 @@ function renderRods() {
     body.setAttribute("x2", rod.length);
     body.setAttribute("y2", 0);
     body.setAttribute("class", "rod-body");
-// 選択中の棒を強調表示
-if (selectedRodId === rod.id) {
-  body.style.stroke = "#2196f3";
-  body.style.strokeWidth = "10";
-}
-if (!connectionMode && pointSettingMode === null) {
-  body.style.cursor = "move";
 
-  body.addEventListener("click", event => {
-    event.stopPropagation();
+    // 選択中の棒を強調表示
+    if (selectedRodId === rod.id) {
+      body.style.stroke = "#2196f3";
+      body.style.strokeWidth = "10";
+    }
 
-    selectedRodId = rod.id;
+    if (!connectionMode && pointSettingMode === null) {
+      body.style.cursor = "move";
 
-    const connected = isRodConnected(rod.id);
+      body.addEventListener("click", event => {
+        event.stopPropagation();
 
-    deleteRodStatus.textContent = connected
-      ? `棒${rod.id}は連結されているため削除できません。`
-      : `棒${rod.id}を選択しました。削除できます。`;
+        selectedRodId = rod.id;
 
-    renderRods();
-  });
+        const connected = isRodConnected(rod.id);
 
-  body.addEventListener("pointerdown", event => {
-    startTranslation(event, rod);
-  });
-}   
+        deleteRodStatus.textContent = connected
+          ? `棒${rod.id}は連結されているため削除できません。`
+          : `棒${rod.id}を選択しました。削除できます。`;
 
-else {
+        renderRods();
+      });
+
+      body.addEventListener("pointerdown", event => {
+        startTranslation(event, rod);
+      });
+    } else {
       body.style.cursor = "default";
     }
 
     group.appendChild(body);
-
 
     // 穴
     const holeCount = rod.divisionCount + 2;
@@ -1295,7 +1260,6 @@ else {
       if (pointSettingMode !== null && !connectionMode) {
         hole.style.cursor = "pointer";
       }
-
 
       // 端点の操作
       if (
@@ -1422,10 +1386,7 @@ function startRotation(event, rod, holeIndex) {
     pivotY,
     pivotLocalX
   };
-}
-
-
-/* =========================================
+}/* =========================================
    連結機構の端点操作
 ========================================= */
 
@@ -1474,12 +1435,6 @@ function startMarkerDrag(event, markerPoint) {
 
   const connectedIds = getConnectedRodIds(rod.id);
 
-  // 同じ機構内にある固定点を確認
-  const hasFixedPoint = points.some(point =>
-    point.type === "fixed" &&
-    connectedIds.includes(point.rodId)
-  );
-
   // 現在の配置を保存
   const originalPositions = connectedIds.map(id => {
     const targetRod = getRodById(id);
@@ -1520,6 +1475,7 @@ function startMarkerDrag(event, markerPoint) {
   };
 }
 
+
 /* =========================================
    ドラッグ処理
 ========================================= */
@@ -1528,7 +1484,6 @@ function onPointerMove(event) {
   if (!dragState) return;
 
   const point = getSVGPoint(event);
-
 
   // 1. 機構全体の平行移動
   if (dragState.type === "translate") {
@@ -1540,7 +1495,6 @@ function onPointerMove(event) {
       position.rod.y = position.y + dy;
     });
   }
-
 
   // 2. 未連結棒の回転
   if (dragState.type === "rotate") {
@@ -1561,7 +1515,6 @@ function onPointerMove(event) {
       dragState.pivotY -
       dragState.pivotLocalX * Math.sin(angle);
   }
-
 
   // 3. 連結機構の端点操作
   if (dragState.type === "connectedEndpoint") {
@@ -1614,7 +1567,6 @@ function onPointerMove(event) {
         "この位置には移動できません。固定点や連結条件を確認してください。";
     }
   }
-
 
   // 4. なぞる点の操作
   if (dragState.type === "markerPoint") {
@@ -1685,6 +1637,7 @@ function onPointerUp() {
   dragState = null;
 }
 
+
 /* =========================================
    モード切り替え
 ========================================= */
@@ -1734,6 +1687,8 @@ function switchMode(mode) {
     pointLayer.style.pointerEvents = "auto";
   }
 }
+
+
 /* =========================================
    自由描画機能
 ========================================= */
@@ -1768,6 +1723,7 @@ function startDrawing(event) {
   currentStroke.element = polyline;
 }
 
+
 // 描画中
 function continueDrawing(event) {
   if (!isDrawing || !currentStroke) return;
@@ -1784,13 +1740,14 @@ function continueDrawing(event) {
   );
 }
 
+
 // 描画終了
 function stopDrawing() {
   isDrawing = false;
   currentStroke = null;
 }
 
-// 描いた図形をすべて消去
+
 // 直前に描いた線を取り消す
 function undoDrawing() {
   if (figureStrokes.length === 0) {
@@ -1808,6 +1765,9 @@ function undoDrawing() {
   drawingStatus.textContent =
     "直前に描いた線を取り消しました。";
 }
+
+
+// 描いた図形をすべて消去
 function clearFigure() {
   figureStrokes = [];
   figureLayer.innerHTML = "";
@@ -1817,46 +1777,63 @@ function clearFigure() {
   }
 }
 
+
 /* =========================================
    イベント設定
 ========================================= */
 
 addRodBtn.addEventListener("click", addRod);
+
 deleteRodBtn.addEventListener("click", deleteSelectedRod);
+
 connectionModeBtn.addEventListener(
   "click",
   toggleConnectionMode
 );
+
 removeConnectionModeBtn.addEventListener(
   "click",
   toggleConnectionRemovalMode
 );
+
 fixedPointModeBtn.addEventListener(
   "click",
   () => setPointSettingMode("fixed")
 );
+
 removeFixedPointModeBtn.addEventListener(
   "click",
   toggleFixedPointRemovalMode
 );
+
 markerPointModeBtn.addEventListener(
   "click",
   () => setPointSettingMode("marker")
 );
+
+// なぞる点の解除モード
 moveMarkerPointModeBtn.addEventListener(
   "click",
-  () => setPointSettingMode("moveMarker")
+  () => setPointSettingMode(
+    pointSettingMode === "removeMarker" ? null : "removeMarker"
+  )
 );
 
+// ペンの解除モード
 movePenPointModeBtn.addEventListener(
   "click",
-  () => setPointSettingMode("movePen")
+  () => setPointSettingMode(
+    pointSettingMode === "removePen" ? null : "removePen"
+  )
 );
+
 penPointModeBtn.addEventListener(
   "click",
   () => setPointSettingMode("pen")
 );
+
 penToggleBtn.addEventListener("click", togglePen);
+
 cancelPointModeBtn.addEventListener(
   "click",
   cancelPointSettingMode
@@ -1878,10 +1855,13 @@ document.addEventListener("pointercancel", stopDrawing);
 
 // 描いた図形を消去
 clearFigureBtn.addEventListener("click", clearFigure);
+
 undoDrawingBtn.addEventListener(
   "click",
   undoDrawing
 );
+
+
 // モード切り替え
 assemblyModeBtn.addEventListener("click", () => {
   switchMode("assembly");
@@ -1890,6 +1870,8 @@ assemblyModeBtn.addEventListener("click", () => {
 drawingModeBtn.addEventListener("click", () => {
   switchMode("drawing");
 });
+
+
 /* =========================================
    初期化
 ========================================= */
